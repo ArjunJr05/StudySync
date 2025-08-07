@@ -401,20 +401,67 @@ class TeacherService {
 
   // --- PRIVATE HELPER & PLACEHOLDER METHODS ---
 
-  /// Placeholder for fetching recent teacher-level activities.
+    /// Fetches the most recent activities from all students under this teacher.
   static Future<List<String>> _getRecentActivities(
     String teacherId,
     String institutionName,
   ) async {
-    
-    return [
-      "New assignment 'Calculus Basics' created.",
-      "Jane Smith was accepted into the class.",
-      "Graded 'History Essay' for 15 students.",
-      "Peter Jones achieved 95% on the 'History Quiz'.",
-      "Samantha Lee joined the class.",
-    ];
+    try {
+      // 1. Get all accepted students for the teacher
+      final studentsSnapshot = await _firestore
+          .collection('institutions')
+          .doc(institutionName)
+          .collection('teachers')
+          .doc(teacherId)
+          .collection('students')
+          .where('status', isEqualTo: 'accepted')
+          .get();
+
+      // 2. Create a list to hold all valid activities
+      final List<Map<String, dynamic>> allActivities = [];
+
+      // 3. Loop through each student document
+      for (final studentDoc in studentsSnapshot.docs) {
+        // Safely get the student's data and name
+        final studentData = studentDoc.data();
+        final studentName = studentData['name'] as String? ?? 'A student';
+
+        // SAFETY CHECK: Ensure the 'recentActivities' field exists and is a List
+        if (studentData['recentActivities'] is List) {
+          // Cast the activities to a generic List to avoid type errors
+          final activitiesList = studentData['recentActivities'] as List;
+
+          // Loop through each activity in the student's list
+          for (final activity in activitiesList) {
+            // SAFETY CHECK: Ensure the activity is a Map and has a timestamp
+            if (activity is Map && activity['timestamp'] is Timestamp) {
+              allActivities.add({
+                'studentName': studentName,
+                'text': activity['activity'] as String? ?? 'completed a task.',
+                'timestamp': activity['timestamp'] as Timestamp,
+              });
+            }
+          }
+        }
+      }
+
+      // 4. Sort all collected activities by timestamp (most recent first)
+      allActivities.sort((a, b) =>
+          (b['timestamp'] as Timestamp).compareTo(a['timestamp'] as Timestamp));
+
+      // 5. Take the 5 most recent activities and format them for display
+      return allActivities
+          .take(5) // You can change this number to show more or fewer activities
+          .map((activity) => "${activity['studentName']}: ${activity['text']}")
+          .toList();
+
+    } catch (e) {
+      debugPrint('Error fetching recent student activities: $e');
+      // Return a user-friendly error message if something goes wrong
+      return ['Could not load recent activities.'];
+    }
   }
+
 
   // This function is no longer the primary source for score, but can be a fallback.
   static double _calculateOverallScore(Map<String, dynamic> data) {

@@ -255,7 +255,7 @@ class _StudentRankingPageState extends State<StudentRankingPage>
               );
             }, childCount: _rankings.length),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
     );
@@ -378,6 +378,7 @@ class _StudentRankingPageState extends State<StudentRankingPage>
                   ),
                 ),
               ),
+              
             ],
           ),
         ),
@@ -513,6 +514,7 @@ class _StudentRankingPageState extends State<StudentRankingPage>
             ],
           ),
         ),
+        
       ],
     );
   }

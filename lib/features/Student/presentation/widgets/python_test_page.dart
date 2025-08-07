@@ -105,16 +105,16 @@ class _PythonTestPageState extends State<PythonTestPage>
       case 'EASY':
         return true;
       case 'MEDIUM':
-        return _completedQuestions['EASY']! >= 25;
+        return _completedQuestions['EASY']! >= 10;
       case 'HARD':
-        return _completedQuestions['MEDIUM']! >= 25;
+        return _completedQuestions['MEDIUM']! >= 10;
       default:
         return false;
     }
   }
 
   bool _isLevelCompleted(String level) {
-    final requiredLevels = level == 'HARD' ? 15 : 25;
+    final requiredLevels = level == 'HARD' ? 5 : 10;
     return _completedQuestions[level]! >= requiredLevels;
   }
 
@@ -444,9 +444,10 @@ class _PythonTestPageState extends State<PythonTestPage>
 
   Widget _buildOverallProgress() {
     final totalCompleted = _completedQuestions.values.reduce((a, b) => a + b);
-    const totalLevels = 65;
+    const totalLevels = 30;
     final overallPercentage =
         totalLevels > 0 ? (totalCompleted / totalLevels * 100).round() : 0;
+
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -594,7 +595,7 @@ class _PythonTestPageState extends State<PythonTestPage>
             description: 'Perfect for beginners',
             details:
                 'Variables, data types, basic operations, and control structures',
-            totalLevels: 25,
+            totalLevels: 10,
             color: const Color(0xFF10B981),
             icon: Icons.school_rounded,
             gradientColors: [const Color(0xFF10B981), const Color(0xFF059669)],
@@ -607,7 +608,7 @@ class _PythonTestPageState extends State<PythonTestPage>
             description: 'Build your expertise',
             details:
                 'Lists, dictionaries, functions, modules, and file handling',
-            totalLevels: 25,
+            totalLevels: 10,
             color: AppColors.primaryColor,
             icon: Icons.build_rounded,
             gradientColors: [
@@ -1117,9 +1118,9 @@ class _PythonTestPageState extends State<PythonTestPage>
   String _getUnlockRequirement(String level) {
     switch (level) {
       case 'MEDIUM':
-        return 'Complete all 25 Easy levels to unlock Medium difficulty';
+        return 'Complete all 10 Easy levels to unlock Medium difficulty';
       case 'HARD':
-        return 'Complete all 25 Medium levels to unlock Hard difficulty';
+        return 'Complete all 10 Medium levels to unlock Hard difficulty';
       default:
         return '';
     }

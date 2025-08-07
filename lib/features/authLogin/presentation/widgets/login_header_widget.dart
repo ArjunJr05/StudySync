@@ -25,25 +25,7 @@ class LoginHeaderWidget extends StatelessWidget {
     return Column(
       children: [
         // Logo
-        Container(
-          width: logoSize,
-          height: logoSize,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(logoSize * 0.17),
-            child: const AnimatedLogoWidget(),
-          ),
-        ),
+        AnimatedLogoWidget(),
 
         SizedBox(height: screenHeight * 0.02),
 
@@ -84,27 +66,39 @@ class LoginHeaderWidget extends StatelessWidget {
 
   Widget _buildInstitutionInfo(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(top: screenHeight * 0.015),
-      padding: EdgeInsets.symmetric(
-        horizontal: screenWidth * 0.04,
-        vertical: screenHeight * 0.008,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.primaryColor.withOpacity(0.3),
-          width: 1,
+  margin: EdgeInsets.only(top: screenHeight * 0.015),
+  padding: EdgeInsets.symmetric(
+    horizontal: screenWidth * 0.04,
+    vertical: screenHeight * 0.008,
+  ),
+  decoration: BoxDecoration(
+    color: AppColors.primaryColor.withOpacity(0.1),
+    borderRadius: BorderRadius.circular(20),
+    border: Border.all(
+      color: AppColors.primaryColor.withOpacity(0.3),
+      width: 1,
+    ),
+  ),
+  child: Row(
+    children: [
+      Icon(Icons.school, color: AppColors.primaryColor, size: 20),
+      SizedBox(width: 8), // spacing between icon and text
+      Expanded(
+        child: Text(
+          institutionName!,
+          style: TextStyle(
+            color: AppColors.primaryColor,
+            fontWeight: FontWeight.w600,
+            fontSize: isSmallScreen ? 12 : 14,
+          ),
+          overflow: TextOverflow.ellipsis, // prevent overflow
+          maxLines: 1,
+          softWrap: false,
         ),
       ),
-      child: Text(
-        institutionName!,
-        style: TextStyle(
-          color: AppColors.primaryColor,
-          fontWeight: FontWeight.w600,
-          fontSize: isSmallScreen ? 12 : 14,
-        ),
-      ),
-    );
+    ],
+  ),
+);
+
   }
 }

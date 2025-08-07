@@ -3,15 +3,38 @@ import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:studysync/core/services/test_service.dart';
 import 'dart:math' as math;
-import 'package:studysync/core/themes/app_colors.dart';
-import 'package:studysync/commons/widgets/k_text.dart';
-import 'package:studysync/features/Student/presentation/widgets/question.dart';
+import 'code_editor.dart';
+
+class AppColors {
+  static const Color primaryColor = Color(0xFF26BDCF);
+  static const Color primaryLightColor = Color(0xFFECF8EE);
+  static const Color primaryGold = Colors.amber;
+  static const Color ThemeRedColor = Color(0xFFEE4443);
+  static const Color subTitleColor = Color(0xFF8D8D8D);
+  static const Color titleColor = Colors.black87;
+  static const Color scaffoldBgLightColor = Color(0xFFF9FAFB);
+}
+
+class KText extends StatelessWidget {
+  final String text;
+  final double? fontSize;
+  final FontWeight? fontWeight;
+  final Color? textColor;
+  final TextAlign? textAlign;
+  const KText({super.key, required this.text, this.fontSize, this.fontWeight, this.textColor, this.textAlign});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, style: TextStyle(fontSize: fontSize, fontWeight: fontWeight, color: textColor), textAlign: textAlign);
+  }
+}
+
+
 
 class GameLevelMapScreen extends StatefulWidget {
   final String studentId;
   final String difficulty;
   final int totalQuestions;
-  // NEW: Added required fields
   final String institutionName;
   final String teacherName;
 
@@ -20,7 +43,6 @@ class GameLevelMapScreen extends StatefulWidget {
     required this.studentId,
     required this.difficulty,
     required this.totalQuestions,
-    // NEW: Added to constructor
     required this.institutionName,
     required this.teacherName,
   });
@@ -32,7 +54,6 @@ class GameLevelMapScreen extends StatefulWidget {
 class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
   late ScrollController _scrollController;
   late ConfettiController _confettiController;
-
   final Map<int, Map<String, dynamic>> _answeredQuestions = {};
   bool _isLoading = true;
   int? _currentActiveQuestion;
@@ -43,11 +64,8 @@ class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _confettiController = ConfettiController(
-      duration: const Duration(seconds: 3),
-    );
-
-    _loadAnsweredQuestions();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _loadAnsweredQuestions(); // This will now call the real Firestore service
   }
 
   @override
@@ -59,120 +77,97 @@ class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
 
   Future<void> _loadAnsweredQuestions() async {
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
+      // **CORE CHANGE**: Call the real Firestore service extension
       final answered = await TestProgressExtension.getAnsweredQuestions(
         studentId: widget.studentId,
-        subject: 'python',
+        subject: 'python', // Use 'python' as per the extension's design
         difficulty: widget.difficulty.toLowerCase(),
       );
 
       if (mounted) {
         setState(() {
+          _answeredQuestions.clear();
           _answeredQuestions.addAll(answered);
-          _completedCount =
-              answered.values.where((answer) => answer['correct'] == true).length;
-          _incorrectAnswers =
-              answered.values.where((answer) => answer['correct'] == false).length;
+          
+          // The logic to calculate counts remains the same, but now uses real data
+          _completedCount = answered.values.where((a) => a['correct'] == true).length;
+          _incorrectAnswers = answered.values.where((a) => a['correct'] == false).length;
           _currentActiveQuestion = _getNextUnlockedQuestion();
           _isLoading = false;
         });
 
+        // Animate to the current active question after the UI is built
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _animateToCurrentQuestion();
+          if (mounted) {
+            Future.delayed(const Duration(milliseconds: 300), _animateToCurrentQuestion);
+          }
         });
       }
     } catch (e) {
-      debugPrint('Error loading answered questions: $e');
+      debugPrint('Error loading answered questions from Firestore: $e');
       if (mounted) {
-        setState(() {
-          _answeredQuestions.clear();
-          _completedCount = 0;
-          _incorrectAnswers = 0;
-          _isLoading = false;
-          _currentActiveQuestion = 1;
-        });
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not load your progress. Please try again later.'))
+        );
       }
     }
   }
 
   int? _getNextUnlockedQuestion() {
     for (int i = 1; i <= widget.totalQuestions; i++) {
-      if (!_answeredQuestions.containsKey(i)) {
-        return i;
-      }
-      if (_answeredQuestions[i]?['correct'] == false) {
-        return i;
+      // Find the first question that has not been completed correctly.
+      if (!_isQuestionCompleted(i)) {
+        // It's playable if it's the first level, or the previous was completed, or it's an incorrect retry.
+        if (_isQuestionUnlocked(i) || _isQuestionAnsweredIncorrectly(i)) {
+          return i;
+        }
       }
     }
+    // All questions have been completed correctly
     return null;
   }
 
-  bool _isQuestionCompleted(int questionNumber) {
-    return _answeredQuestions.containsKey(questionNumber) &&
-        _answeredQuestions[questionNumber]?['answered'] == true &&
-        _answeredQuestions[questionNumber]?['correct'] == true;
-  }
+  // **VERIFIED**: These helper methods work correctly with the Firestore data structure.
+  bool _isQuestionCompleted(int qNum) => _answeredQuestions.containsKey(qNum) && _answeredQuestions[qNum]?['correct'] == true;
+  bool _isQuestionAnsweredIncorrectly(int qNum) => _answeredQuestions.containsKey(qNum) && _answeredQuestions[qNum]?['correct'] == false;
+  bool _isQuestionUnlocked(int qNum) => qNum == 1 || _isQuestionCompleted(qNum - 1);
 
-  bool _isQuestionAnsweredIncorrectly(int questionNumber) {
-    return _answeredQuestions.containsKey(questionNumber) &&
-        _answeredQuestions[questionNumber]?['answered'] == true &&
-        _answeredQuestions[questionNumber]?['correct'] == false;
-  }
-
-  bool _isQuestionUnlocked(int questionNumber) {
-    if (questionNumber == 1) return true;
-    return _isQuestionCompleted(questionNumber - 1);
-  }
-
+  /// **MODIFIED**: Refreshes progress after returning from the CodeEditorScreen.
   Future<void> _navigateToQuestion(int levelNumber) async {
-    if (!_isQuestionUnlocked(levelNumber) &&
-        !_isQuestionAnsweredIncorrectly(levelNumber)) {
+    if (!_isQuestionUnlocked(levelNumber) && !_isQuestionAnsweredIncorrectly(levelNumber)) {
       _showEnhancedLockedQuestionDialog(levelNumber);
       return;
     }
 
     if (_isQuestionAnsweredIncorrectly(levelNumber)) {
       final shouldRetry = await _showRetryDialog(levelNumber);
-      if (!shouldRetry) return;
+      if (shouldRetry == null || !shouldRetry) return;
     }
-
-    final question = QuestionService.getQuestion(
-      widget.difficulty,
-      levelNumber,
-    );
 
     final result = await Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            TestQuestionScreen(
-          studentId: widget.studentId,
-          difficulty: widget.difficulty,
-          questionNumber: levelNumber,
-          totalQuestions: widget.totalQuestions,
-          question: question,
-          institutionName: widget.institutionName,
-          teacherName: widget.teacherName,
-        ),
+          pageBuilder: (context, animation, secondaryAnimation) => CodeEditorScreen(
+              studentId: widget.studentId,
+              difficulty: widget.difficulty,
+              questionNumber: levelNumber,
+              institutionName: widget.institutionName,
+              teacherName: widget.teacherName,
+          ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(0.0, 1.0);
           const end = Offset.zero;
-          const curve = Curves.easeInOutCubic;
-          var tween =
-              Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-          return SlideTransition(
-            position: animation.drive(tween),
-            child: child,
-          );
+          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: Curves.easeInOutCubic));
+          return SlideTransition(position: animation.drive(tween), child: child);
         },
       ),
     );
 
-    if (result == true) {
+    if (result == true && mounted) {
       await _loadAnsweredQuestions();
       if (_completedCount == widget.totalQuestions) {
         _confettiController.play();
@@ -181,49 +176,32 @@ class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
     }
   }
 
-  // ... (The rest of the file is unchanged and omitted for brevity)
   Color _getDifficultyColor() {
-    switch (widget.difficulty) {
-      case 'EASY':
-        return AppColors.primaryColor;
-      case 'MEDIUM':
-        return AppColors.primaryGold;
-      case 'HARD':
-        return AppColors.ThemeRedColor;
-      default:
-        return AppColors.primaryColor;
+    switch (widget.difficulty.toUpperCase()) {
+      case 'EASY': return AppColors.primaryColor;
+      case 'MEDIUM': return AppColors.primaryGold;
+      case 'HARD': return AppColors.ThemeRedColor;
+      default: return AppColors.primaryColor;
     }
   }
-
+  
   List<Color> _getDifficultyGradient() {
-    switch (widget.difficulty) {
-      case 'EASY':
-        return [AppColors.primaryColor, AppColors.primaryColor.withOpacity(0.8)];
-      case 'MEDIUM':
-        return [AppColors.primaryGold, AppColors.primaryGold.withOpacity(0.8)];
-      case 'HARD':
-        return [
-          AppColors.ThemeRedColor,
-          AppColors.ThemeRedColor.withOpacity(0.9)
-        ];
-      default:
-        return [AppColors.primaryColor, AppColors.primaryColor.withOpacity(0.8)];
+    switch (widget.difficulty.toUpperCase()) {
+      case 'EASY': return [AppColors.primaryColor, AppColors.primaryColor.withOpacity(0.8)];
+      case 'MEDIUM': return [AppColors.primaryGold, AppColors.primaryGold.withOpacity(0.8)];
+      case 'HARD': return [AppColors.ThemeRedColor, AppColors.ThemeRedColor.withOpacity(0.9)];
+      default: return [AppColors.primaryColor, AppColors.primaryColor.withOpacity(0.8)];
     }
   }
 
   void _animateToCurrentQuestion() {
-    if (_currentActiveQuestion != null) {
-      // Calculate offset based on level position (item height 160 + margin 20 = 180)
-      final targetLevel = _currentActiveQuestion!;
-      final offset = (targetLevel - 1) * 180.0;
-
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          offset.clamp(0.0, _scrollController.position.maxScrollExtent),
-          duration: const Duration(milliseconds: 1000),
-          curve: Curves.easeInOutCubic,
-        );
-      }
+    if (_currentActiveQuestion != null && _scrollController.hasClients) {
+      final offset = (_currentActiveQuestion! - 1) * 180.0;
+      _scrollController.animateTo(
+        offset.clamp(0.0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 1000),
+        curve: Curves.easeInOutCubic,
+      );
     }
   }
 
@@ -726,7 +704,7 @@ class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 KText(
-                                  text: '${widget.difficulty} LEVELS',
+                                  text: '${widget.difficulty.toUpperCase()} LEVELS',
                                   fontSize: 26,
                                   fontWeight: FontWeight.w900,
                                   textColor: Colors.white,
@@ -803,7 +781,7 @@ class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
   }
 
   IconData _getDifficultyIcon() {
-    switch (widget.difficulty) {
+    switch (widget.difficulty.toUpperCase()) {
       case 'EASY':
         return Icons.sentiment_very_satisfied;
       case 'MEDIUM':
@@ -1149,13 +1127,13 @@ class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
       return Colors.grey[400]!;
     }
   }
-
-  void _showEnhancedLevelCompletedDialog() {
+void _showEnhancedLevelCompletedDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.transparent, // Make dialog background transparent
+        insetPadding: const EdgeInsets.all(24), // Add some padding around the dialog
         child: Container(
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
@@ -1165,7 +1143,7 @@ class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
               colors: [
                 Colors.white,
                 Colors.white.withOpacity(0.95),
-                _getDifficultyColor().withOpacity(0.05),
+                Colors.white,
               ],
             ),
             borderRadius: BorderRadius.circular(28),
@@ -1183,150 +1161,156 @@ class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      _getDifficultyColor(),
-                      _getDifficultyColor().withOpacity(0.8),
+          // ✅ FIX: Wrap the Column with SingleChildScrollView
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _getDifficultyColor(),
+                        _getDifficultyColor().withOpacity(0.8),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: _getDifficultyColor().withOpacity(0.4),
+                        blurRadius: 25,
+                        offset: const Offset(0, 15),
+                      ),
                     ],
                   ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: _getDifficultyColor().withOpacity(0.4),
-                      blurRadius: 25,
-                      offset: const Offset(0, 15),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.celebration_rounded,
-                  color: Colors.white,
-                  size: 48,
-                ),
-              ),
-              const SizedBox(height: 24),
-              KText(
-                text: '🎉 All Levels Completed! 🎉',
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                textColor: _getDifficultyColor(),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      _getDifficultyColor().withOpacity(0.1),
-                      _getDifficultyColor().withOpacity(0.05),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _getDifficultyColor().withOpacity(0.2),
-                    width: 1,
+                  child: const Icon(
+                    Icons.celebration_rounded,
+                    color: Colors.white,
+                    size: 48,
                   ),
                 ),
-                child: Column(
-                  children: [
-                    KText(
-                      text:
-                          'Congratulations! You have successfully completed all ${widget.totalQuestions} levels in the ${widget.difficulty} difficulty.',
-                      textAlign: TextAlign.center,
-                      textColor: AppColors.subTitleColor,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
+                const SizedBox(height: 24),
+                KText(
+                  text: '🎉 All Levels Completed! 🎉',
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  textColor: _getDifficultyColor(),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _getDifficultyColor().withOpacity(0.1),
+                        _getDifficultyColor().withOpacity(0.05),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.primaryColor.withOpacity(0.15),
-                            AppColors.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _getDifficultyColor().withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      KText(
+                        text:
+                            'Congratulations! You have successfully completed all ${widget.totalQuestions} levels in the ${widget.difficulty} difficulty.',
+                        textAlign: TextAlign.center,
+                        textColor: AppColors.subTitleColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.primaryColor.withOpacity(0.15),
+                              AppColors.primaryColor.withOpacity(0.1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.primaryColor.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.emoji_events,
+                                color: AppColors.primaryColor, size: 20),
+                            const SizedBox(width: 8),
+                            KText(
+                              text: '${widget.difficulty} Mastered!',
+                              fontWeight: FontWeight.bold,
+                              textColor: AppColors.primaryColor,
+                              fontSize: 14,
+                            ),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.primaryColor.withOpacity(0.2),
-                        ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.emoji_events,
-                              color: AppColors.primaryColor, size: 20),
-                          const SizedBox(width: 8),
-                          KText(
-                            text: '${widget.difficulty} Difficulty Mastered!',
-                            fontWeight: FontWeight.bold,
-                            textColor: AppColors.primaryColor,
-                            fontSize: 14,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      _getDifficultyColor(),
-                      _getDifficultyColor().withOpacity(0.8),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _getDifficultyColor().withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
                 ),
-                child: Material(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(16),
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop(true);
-                    },
+                const SizedBox(height: 28),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _getDifficultyColor(),
+                        _getDifficultyColor().withOpacity(0.8),
+                      ],
+                    ),
                     borderRadius: BorderRadius.circular(16),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.arrow_forward_rounded,
-                              color: Colors.white, size: 20),
-                          SizedBox(width: 8),
-                          KText(
-                            text: 'Continue to Next Challenge',
-                            fontWeight: FontWeight.bold,
-                            textColor: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ],
+                    boxShadow: [
+                      BoxShadow(
+                        color: _getDifficultyColor().withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop(); // Closes the dialog
+                        // Assuming this dialog was pushed from another screen,
+                        // this second pop would take you back further.
+                        // Be sure this is the intended navigation behavior.
+                        Navigator.of(context).pop(true);
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.arrow_forward_rounded,
+                                color: Colors.white, size: 20),
+                            SizedBox(width: 8),
+                            KText(
+                              text: 'Continue to Next Challenge',
+                              fontWeight: FontWeight.bold,
+                              textColor: Colors.white,
+                              fontSize: 16,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

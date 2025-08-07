@@ -101,7 +101,7 @@ class _StudentDashboardMainState extends State<StudentDashboardMain>
       BottomNavItem(
         icon: Icons.leaderboard_outlined,
         activeIcon: Icons.leaderboard,
-        label: 'Rankings',
+        label: 'Rank',
         color: AppColors.primaryColor,
       ),
       BottomNavItem(

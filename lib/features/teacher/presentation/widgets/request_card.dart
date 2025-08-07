@@ -136,7 +136,7 @@ class _RequestCardState extends State<RequestCard>
                     colors: [
                       Colors.white,
                       Colors.white.withOpacity(0.95),
-                      _getStatusColor().withOpacity(0.02),
+                      Colors.white,
                     ],
                     stops: const [0.0, 0.7, 1.0],
                   ),

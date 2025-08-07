@@ -495,7 +495,7 @@ class _RequestManagementPageState extends State<RequestManagementPage>
                                                   widget.institutionName,
                                                   style: TextStyle(
                                                     fontSize:
-                                                        isMobile ? 11 : 13,
+                                                        isMobile ? 10 : 12,
                                                     color: Colors.white,
                                                     fontWeight:
                                                         FontWeight.w600,
@@ -1094,8 +1094,7 @@ class _RequestManagementPageState extends State<RequestManagementPage>
               end: Alignment.bottomRight,
               colors: [
                 Colors.white,
-                Colors.white.withOpacity(0.95),
-                color.withOpacity(0.02),
+                Colors.white
               ],
             ),
             borderRadius: BorderRadius.circular(24),
@@ -1718,14 +1717,14 @@ class _EnhancedRequestDetailsSheetState
                       colors: [
                         Colors.white,
                         Colors.white.withOpacity(0.95),
-                        widget.request.status.color.withOpacity(0.02),
+                        Colors.white,
                       ],
                     ),
                     borderRadius:
                         const BorderRadius.vertical(top: Radius.circular(28)),
                     boxShadow: [
                       BoxShadow(
-                        color: widget.request.status.color.withOpacity(0.1),
+                        color: Colors.white,
                         blurRadius: 25,
                         offset: const Offset(0, -5),
                         spreadRadius: 2,
