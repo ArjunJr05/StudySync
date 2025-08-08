@@ -2,18 +2,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
 import 'package:studysync/core/services/test_service.dart';
+import 'package:studysync/core/themes/app_colors.dart';
 import 'dart:math' as math;
 import 'code_editor.dart';
 
-class AppColors {
-  static const Color primaryColor = Color(0xFF26BDCF);
-  static const Color primaryLightColor = Color(0xFFECF8EE);
-  static const Color primaryGold = Colors.amber;
-  static const Color ThemeRedColor = Color(0xFFEE4443);
-  static const Color subTitleColor = Color(0xFF8D8D8D);
-  static const Color titleColor = Colors.black87;
-  static const Color scaffoldBgLightColor = Color(0xFFF9FAFB);
-}
 
 class KText extends StatelessWidget {
   final String text;
