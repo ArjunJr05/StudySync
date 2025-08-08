@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:studysync/core/services/test_service.dart';
-import 'package:studysync/core/themes/app_colors.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'question.dart';
+
+// --- Color Definitions ---
+class AppColors {
+  static const Color primaryColor = Color(0xFF26BDCF);
+  static const Color secondaryColor = Colors.white;
+  static const Color scaffoldBgLightColor = Color(0xFFF9FAFB);
+  static const Color scaffoldWorkOutBgDarkColor = Color(0xFF101D23);
+  static const Color ThemeRedColor = Color(0xFFEE4443);
+  static const Color ThemeGreenColor = Color(0xFF23C45E);
+  static const Color ThemelightGreenColor = Color(0xFFA8CC12);
+  static const Color tipsBgColor = Color(0xFFE6F4EE);
+  static const Color tipsBorderColor = Color(0xFFC3E4EA);
+  static const Color titleColor = Colors.black87;
+  static const Color subTitleColor = Color(0xFF8D8D8D);
+}
 
 class DarkAppColors {
   static const Color primaryColor = Color(0xFF26BDCF);

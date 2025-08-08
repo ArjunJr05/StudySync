@@ -1,25 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
+import 'package:studysync/commons/widgets/k_text.dart';
 import 'package:studysync/core/services/test_service.dart';
 import 'package:studysync/core/themes/app_colors.dart';
 import 'dart:math' as math;
-import 'code_editor.dart';
+import 'code_editor.dart' hide AppColors;
 
 
-class KText extends StatelessWidget {
-  final String text;
-  final double? fontSize;
-  final FontWeight? fontWeight;
-  final Color? textColor;
-  final TextAlign? textAlign;
-  const KText({super.key, required this.text, this.fontSize, this.fontWeight, this.textColor, this.textAlign});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(text, style: TextStyle(fontSize: fontSize, fontWeight: fontWeight, color: textColor), textAlign: textAlign);
-  }
-}
 
 
 
