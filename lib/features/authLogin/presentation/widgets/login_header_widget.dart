@@ -65,40 +65,64 @@ class LoginHeaderWidget extends StatelessWidget {
   }
 
   Widget _buildInstitutionInfo(BuildContext context) {
-    return Container(
-  margin: EdgeInsets.only(top: screenHeight * 0.015),
-  padding: EdgeInsets.symmetric(
-    horizontal: screenWidth * 0.04,
-    vertical: screenHeight * 0.008,
-  ),
-  decoration: BoxDecoration(
-    color: AppColors.primaryColor.withOpacity(0.1),
-    borderRadius: BorderRadius.circular(20),
-    border: Border.all(
-      color: AppColors.primaryColor.withOpacity(0.3),
-      width: 1,
+  // Calculate text width to determine container size
+  final textStyle = TextStyle(
+    color: AppColors.primaryColor,
+    fontWeight: FontWeight.w600,
+    fontSize: isSmallScreen ? 12 : 14,
+  );
+  
+  final textPainter = TextPainter(
+    text: TextSpan(text: institutionName!, style: textStyle),
+    maxLines: 1,
+    textDirection: TextDirection.ltr,
+  );
+  textPainter.layout();
+  
+  // Calculate required width: text width + icon width + spacing + padding
+  final iconWidth = 20.0;
+  final spacing = 8.0;
+  final horizontalPadding = screenWidth * 0.04 * 2; // left + right padding
+  final borderWidth = 2.0; // 1px border on each side
+  
+  final requiredWidth = textPainter.size.width + iconWidth + spacing + horizontalPadding + borderWidth;
+  
+  // Set maximum width to prevent overflow (90% of screen width)
+  final maxWidth = screenWidth * 0.9;
+  final containerWidth = requiredWidth > maxWidth ? maxWidth : requiredWidth;
+  
+  return Container(
+    width: containerWidth,
+    margin: EdgeInsets.only(top: screenHeight * 0.015),
+    padding: EdgeInsets.symmetric(
+      horizontal: screenWidth * 0.03,
+      vertical: screenHeight * 0.008,
     ),
-  ),
-  child: Row(
-    children: [
-      Icon(Icons.school, color: AppColors.primaryColor, size: 20),
-      SizedBox(width: 8), // spacing between icon and text
-      Expanded(
-        child: Text(
-          institutionName!,
-          style: TextStyle(
-            color: AppColors.primaryColor,
-            fontWeight: FontWeight.w600,
-            fontSize: isSmallScreen ? 12 : 14,
-          ),
-          overflow: TextOverflow.ellipsis, // prevent overflow
-          maxLines: 1,
-          softWrap: false,
-        ),
+    decoration: BoxDecoration(
+      color: AppColors.primaryColor.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: AppColors.primaryColor.withOpacity(0.3),
+        width: 1,
       ),
-    ],
-  ),
-);
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min, // This helps the row take minimum required space
+      children: [
+        Icon(Icons.school, color: AppColors.primaryColor, size: 20),
+        SizedBox(width: 8), // spacing between icon and text
+        Flexible( // Changed from Expanded to Flexible
+          child: Text(
+            institutionName!,
+            style: textStyle,
+            overflow: TextOverflow.ellipsis, // prevent overflow
+            maxLines: 1,
+            softWrap: false,
+          ),
+        ),
+      ],
+    ),
+  );
 
   }
 }

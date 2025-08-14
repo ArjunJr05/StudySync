@@ -4,8 +4,8 @@ import 'package:confetti/confetti.dart';
 import 'package:studysync/commons/widgets/k_text.dart';
 import 'package:studysync/core/services/test_service.dart';
 import 'package:studysync/core/themes/app_colors.dart';
+import 'package:studysync/features/Student/presentation/screens/video.dart';
 import 'dart:math' as math;
-import 'code_editor.dart' hide AppColors;
 
 
 
@@ -116,45 +116,47 @@ class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
   bool _isQuestionAnsweredIncorrectly(int qNum) => _answeredQuestions.containsKey(qNum) && _answeredQuestions[qNum]?['correct'] == false;
   bool _isQuestionUnlocked(int qNum) => qNum == 1 || _isQuestionCompleted(qNum - 1);
 
-  /// **MODIFIED**: Refreshes progress after returning from the CodeEditorScreen.
   Future<void> _navigateToQuestion(int levelNumber) async {
-    if (!_isQuestionUnlocked(levelNumber) && !_isQuestionAnsweredIncorrectly(levelNumber)) {
-      _showEnhancedLockedQuestionDialog(levelNumber);
-      return;
-    }
+  if (!_isQuestionUnlocked(levelNumber) && !_isQuestionAnsweredIncorrectly(levelNumber)) {
+    _showEnhancedLockedQuestionDialog(levelNumber);
+    return;
+  }
 
-    if (_isQuestionAnsweredIncorrectly(levelNumber)) {
-      final shouldRetry = await _showRetryDialog(levelNumber);
-      if (shouldRetry == null || !shouldRetry) return;
-    }
+  if (_isQuestionAnsweredIncorrectly(levelNumber)) {
+    final shouldRetry = await _showRetryDialog(levelNumber);
+    if (shouldRetry == null || !shouldRetry) return;
+  }
 
-    final result = await Navigator.push(
-      context,
-      PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => CodeEditorScreen(
-              studentId: widget.studentId,
-              difficulty: widget.difficulty,
-              questionNumber: levelNumber,
-              institutionName: widget.institutionName,
-              teacherName: widget.teacherName,
-          ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(0.0, 1.0);
-          const end = Offset.zero;
-          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: Curves.easeInOutCubic));
-          return SlideTransition(position: animation.drive(tween), child: child);
-        },
+  // Navigate to video player first
+  final result = await Navigator.push(
+    context,
+    PageRouteBuilder(
+      settings: const RouteSettings(name: '/video'), // Add route name
+      pageBuilder: (context, animation, secondaryAnimation) => VideoPlayerScreen(
+        studentId: widget.studentId,
+        difficulty: widget.difficulty,
+        questionNumber: levelNumber,
+        institutionName: widget.institutionName,
+        teacherName: widget.teacherName,
       ),
-    );
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(0.0, 1.0);
+        const end = Offset.zero;
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: Curves.easeInOutCubic));
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
+    ),
+  );
 
-    if (result == true && mounted) {
-      await _loadAnsweredQuestions();
-      if (_completedCount == widget.totalQuestions) {
-        _confettiController.play();
-        _showEnhancedLevelCompletedDialog();
-      }
+  // Always reload answered questions when returning from video/code screens
+  if (mounted) {
+    await _loadAnsweredQuestions();
+    if (_completedCount == widget.totalQuestions) {
+      _confettiController.play();
+      _showEnhancedLevelCompletedDialog();
     }
   }
+}
 
   Color _getDifficultyColor() {
     switch (widget.difficulty.toUpperCase()) {
@@ -323,7 +325,7 @@ class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
               colors: [
                 Colors.white,
                 Colors.white.withOpacity(0.95),
-                Colors.orange.withOpacity(0.05),
+                Colors.white,
               ],
             ),
             borderRadius: BorderRadius.circular(24),
@@ -398,7 +400,6 @@ class _GameLevelMapScreenState extends State<GameLevelMapScreen> {
                 onPressed: () => Navigator.of(context).pop(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
                   padding:
                       const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
                   shape: RoundedRectangleBorder(

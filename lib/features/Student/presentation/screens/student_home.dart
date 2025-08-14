@@ -632,7 +632,6 @@ class _StudentHomePageState extends State<StudentHomePage>
               ),
             )
           else
-            // ✨ FIX: Filter the list to only include Map objects before mapping.
             ..._recentActivities
                 .where((activity) => activity is Map<String, dynamic>)
                 .map((activity) {

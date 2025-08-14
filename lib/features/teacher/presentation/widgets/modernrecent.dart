@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:studysync/commons/widgets/k_horizontal_spacer.dart';
 import 'package:studysync/commons/widgets/k_text.dart';
@@ -150,51 +152,8 @@ class _ModernRecentActivityState extends State<ModernRecentActivity>
                   ),
                 ],
               ),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    // TODO: Implement 'View All' functionality
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primaryColor.withOpacity(0.1),
-                          AppColors.primaryColor.withOpacity(0.05),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.primaryColor.withOpacity(0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const KText(
-                          text: 'View All',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          textColor: AppColors.primaryColor,
-                        ),
-                        const KHorizontalSpacer(width: 4),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 12,
-                          color: AppColors.primaryColor,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
-          const KVerticalSpacer(height: 20),
           if (widget.activities.isEmpty)
             _buildEmptyState(isMobile)
           else

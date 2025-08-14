@@ -1,25 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:studysync/core/services/test_service.dart';
+import 'package:studysync/core/themes/app_colors.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:async';
 import 'question.dart';
 
-// --- Color Definitions ---
-class AppColors {
-  static const Color primaryColor = Color(0xFF26BDCF);
-  static const Color secondaryColor = Colors.white;
-  static const Color scaffoldBgLightColor = Color(0xFFF9FAFB);
-  static const Color scaffoldWorkOutBgDarkColor = Color(0xFF101D23);
-  static const Color ThemeRedColor = Color(0xFFEE4443);
-  static const Color ThemeGreenColor = Color(0xFF23C45E);
-  static const Color ThemelightGreenColor = Color(0xFFA8CC12);
-  static const Color tipsBgColor = Color(0xFFE6F4EE);
-  static const Color tipsBorderColor = Color(0xFFC3E4EA);
-  static const Color titleColor = Colors.black87;
-  static const Color subTitleColor = Color(0xFF8D8D8D);
-}
 
 class DarkAppColors {
   static const Color primaryColor = Color(0xFF26BDCF);
@@ -249,24 +236,26 @@ class _CodeEditorScreenState extends State<CodeEditorScreen> with TickerProvider
   void _toggleTheme() => setState(() => _isDarkMode = !_isDarkMode);
 
   void _showSuccessDialog() {
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-              title: const Text('Congratulations!'),
-              content: Text('You have successfully completed ${_currentQuestion?.title ?? "this problem"}!'),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop();
-                      // This is crucial: it pops the CodeEditorScreen and returns `true`
-                      // to the GameLevelMapScreen, signaling a refresh is needed.
-                      Navigator.of(context).pop(true); 
-                    },
-                    child: const Text('Continue'))
-              ],
-            ));
-  }
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Congratulations!'),
+      content: Text('You have successfully completed ${_currentQuestion?.title ?? "this problem"}!'),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(ctx).pop(); // Close dialog
+            Navigator.of(context).pop(true); // Return true to video screen
+          },
+          child: const Text('Continue')
+        )
+      ],
+    )
+  );
+}
+  
+
 
   void _showPartialSuccessDialog(int passed, int total) {
       showDialog(context: context, builder: (ctx) => AlertDialog(
